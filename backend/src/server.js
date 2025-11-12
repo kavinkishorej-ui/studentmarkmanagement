@@ -10,6 +10,7 @@ import studentRoutes from './routes/student.js';
 
 dotenv.config();
 
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -49,5 +50,30 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+const allowedOrigins = [
+  'http://localhost:5173',          // local dev
+  'https://your-frontend.vercel.app' // replace after Vercel deploy
+];
 
+// ✅ CORS setup
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow Postman
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('CORS not allowed'), false);
+  },
+  credentials: true
+}));
+
+// ✅ Enable session cookies
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'fallback-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only on Render
+    sameSite: 'none',  // allow frontend (Vercel) to share cookies
+    maxAge: 1000 * 60 * 60 * 24  // 1 day
+  }
+}));
 export default app;
